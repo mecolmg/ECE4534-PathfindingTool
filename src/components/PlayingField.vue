@@ -9,8 +9,8 @@ const axios = require('axios');
 require('../FieldObject');
 
 let canvas = null;
-const FEILD_WIDTH_CM = 100;
-const FEILD_HEIGHT_CM = 140;
+const FEILD_WIDTH_CM = 120;
+const FEILD_HEIGHT_CM = 180;
 const CANVAS_WIDTH = 300;
 const CANVAS_HEIGHT = (FEILD_HEIGHT_CM / FEILD_WIDTH_CM) * CANVAS_WIDTH;
 
@@ -35,34 +35,49 @@ export default {
   methods: {
     updateField: (options) => {
       const fieldMap = {
+        MSG_TYPE: 98,
+        OBJ_ID: 98,
         width: FEILD_WIDTH_CM,
         height: FEILD_HEIGHT_CM,
       };
       _.each(canvas.getObjects(), (obj) => {
         fieldMap[obj.label] = {
-          x: xInv(obj.left),
-          y: yInv(obj.top),
-          width: xInv(obj.width),
-          height: yInv(obj.height),
-          angle: dtor(obj.angle),
+          MSG_TYPE: 98,
+          OBJ_ID: obj.objId,
+          x: xInv(obj.left).toFixed(1),
+          y: yInv(obj.top).toFixed(1),
+          width: yInv(obj.height).toFixed(1),
+          height: xInv(obj.width).toFixed(1),
+          angle: dtor(obj.angle).toFixed(1),
         };
-        console.log(obj.label);
+        axios({
+          method: 'post',
+          url: 'http://192.168.4.1:5000/debug',
+          params: { MSG_TYPE: 98, OBJ_ID: obj.objId },
+          headers: { 'Content-Type': 'application/json', SequenceId: 1 },
+          data: fieldMap[obj.label],
+        }).then((response) => {
+          console.log(response);
+        });
+        console.log(fieldMap[obj.label]);
       });
-      // axios.post('http://192.168.4.1:5000/debug', {
-      //   params: { MSG_TYPE: 99 },
-      //   headers: { 'Content-Type': 'application/json', SequenceId: 1 },
-      //   body: JSON.stringify(fieldMap),
-      // }).then((response) => {
-      //   console.log(response);
-      // });
       axios({
-        method: 'get',
+        method: 'post',
         url: 'http://192.168.4.1:5000/debug',
-        params: { MSG_TYPE: 9 },
-        headers: { SequenceId: 1 },
+        params: { MSG_TYPE: 98, OBJ_ID: 98 },
+        headers: { 'Content-Type': 'application/json', SequenceId: 1 },
+        data: fieldMap,
       }).then((response) => {
         console.log(response);
       });
+      // axios({
+      //   method: 'get',
+      //   url: 'http://192.168.4.1:5000/debug',
+      //   params: { MSG_TYPE: 9 },
+      //   headers: { SequenceId: 1 },
+      // }).then((response) => {
+      //   console.log(response);
+      // });
       // this.$http.get('/').then((response) => {
       //   console.log(response);
       // });
@@ -78,6 +93,7 @@ export default {
       angle: 180,
       fill: 'blue',
       label: 'shark',
+      objId: 0,
     });
     const minnow1 = new fabric.FieldObject({
       top: y(FEILD_HEIGHT_CM - 10),
@@ -86,6 +102,7 @@ export default {
       height: y(10),
       fill: 'red',
       label: 'minnow1',
+      objId: 1,
     });
     const minnow2 = new fabric.FieldObject({
       top: y(FEILD_HEIGHT_CM - 10),
@@ -94,15 +111,17 @@ export default {
       height: y(10),
       fill: 'green',
       label: 'minnow2',
+      objId: 2,
     });
     for (let i = 1; i < 6; i += 1) {
       const obstacle = new fabric.FieldObject({
         top: y(FEILD_HEIGHT_CM / 2),
         left: x((FEILD_WIDTH_CM * i) / 6),
-        width: x(10),
-        height: y(20),
+        width: x(20),
+        height: y(10),
         fill: 'black',
         label: `obj${i}`,
+        objId: i + 2,
       });
       canvas.add(obstacle);
     }
