@@ -23,6 +23,7 @@ const y = val => (val * CANVAS_HEIGHT) / FEILD_HEIGHT_CM;
 const xInv = val => (val * FEILD_WIDTH_CM) / CANVAS_WIDTH;
 const yInv = val => (val * FEILD_HEIGHT_CM) / CANVAS_HEIGHT;
 const dtor = val => mod(-(val + 270), 360) * ((Math.PI * 2) / 360);
+let counter = 0;
 
 export default {
   name: 'PlayingField',
@@ -41,23 +42,40 @@ export default {
         height: FEILD_HEIGHT_CM,
       };
       _.each(canvas.getObjects(), (obj) => {
-        fieldMap[obj.label] = {
-          MSG_TYPE: 98,
-          OBJ_ID: obj.objId,
-          x: xInv(obj.left).toFixed(1),
-          y: yInv(obj.top).toFixed(1),
-          width: yInv(obj.height).toFixed(1),
-          height: xInv(obj.width).toFixed(1),
-          angle: dtor(obj.angle).toFixed(1),
-        };
+        console.log(obj);
+        if (obj.objId < 3) {
+          fieldMap[obj.label] = {
+            MSG_TYPE: 5,
+            OBJ_ID: obj.objId,
+            ID: 3,
+            ax: Math.round((xInv(obj.left) + 5 * Math.cos(dtor(obj.angle)))),
+            ay: Math.round((yInv(obj.top) + 5 * Math.sin(dtor(obj.angle)))),
+            bx: Math.round((xInv(obj.left) - 5 * Math.cos(dtor(obj.angle)))),
+            by: Math.round((yInv(obj.top) - 5 * Math.sin(dtor(obj.angle)))),
+            aFR: 1000,
+            bFR: 1000,
+            aRound: counter++,
+            bRound: counter++,
+          };
+        } else {
+          fieldMap[obj.label] = {
+            MSG_TYPE: 5,
+            OBJ_ID: obj.objId,
+            ID: 3,
+            ax: Math.round(xInv(obj.left)),
+            ay: Math.round(yInv(obj.top)),
+            aFR: 1000,
+            aRound: counter++,
+          };
+        }
         axios({
           method: 'post',
-          url: 'http://192.168.4.1:5000/debug',
-          params: { MSG_TYPE: 98, OBJ_ID: obj.objId },
+          url: 'http://192.168.4.1:5000/data',
+          params: { MSG_TYPE: 5, OBJ_ID: obj.objId, ID: 3 },
           headers: { 'Content-Type': 'application/json', SequenceId: 1 },
           data: fieldMap[obj.label],
         }).then((response) => {
-          console.log(response);
+          // console.log(response);
         });
         console.log(fieldMap[obj.label]);
       });
@@ -114,11 +132,10 @@ export default {
       objId: 2,
     });
     for (let i = 1; i < 6; i += 1) {
-      const obstacle = new fabric.FieldObject({
+      const obstacle = new fabric.FieldObstacle({
         top: y(FEILD_HEIGHT_CM / 2),
         left: x((FEILD_WIDTH_CM * i) / 6),
-        width: x(20),
-        height: y(10),
+        radius: x(10),
         fill: 'black',
         label: `obj${i}`,
         objId: i + 2,
